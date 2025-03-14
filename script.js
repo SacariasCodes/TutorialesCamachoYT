@@ -1,3 +1,44 @@
+const API_KEY = 'AIzaSyB3Lu22nUV_G9llHGkHN1e7Hm2Mocny-FE';  // Reemplázalo con tu clave
+const CHANNEL_ID = 'UCx-JNGoyRJrCjoeW3gESKcQ'; // Reemplázalo con el ID de tu canal
+
+async function fetchVideos() {
+    try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=6`);
+        const data = await response.json();
+
+        if (!data.items) throw new Error('No se encontraron videos');
+
+        const videoContainer = document.querySelector('.video-container');
+        videoContainer.innerHTML = ''; // Limpiar contenedor
+
+        data.items.forEach(video => {
+            const videoId = video.id.videoId;
+            const title = video.snippet.title;
+            const thumbnail = video.snippet.thumbnails.medium.url;
+
+            const videoCard = document.createElement('div');
+            videoCard.classList.add('video-card');
+            videoCard.setAttribute('data-video', `https://www.youtube.com/watch?v=${videoId}`);
+
+            videoCard.innerHTML = `
+                <img src="${thumbnail}" alt="${title}">
+                <h3>${title}</h3>
+            `;
+
+            videoCard.addEventListener('click', function () {
+                window.open(this.getAttribute('data-video'), '_blank', 'noopener,noreferrer');
+            });
+
+            videoContainer.appendChild(videoCard);
+        });
+    } catch (error) {
+        console.error('Error al obtener los videos:', error);
+    }
+}
+
+// Llamar a la función al cargar la página
+fetchVideos();
+
 // Enlaces de redes sociales - Reemplaza con tus propios enlaces
 document.querySelectorAll('.social-btn').forEach(btn => {
     btn.addEventListener('click', function() {
