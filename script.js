@@ -1,51 +1,77 @@
-const API_KEY = 'AIzaSyB3Lu22nUV_G9llHGkHN1e7Hm2Mocny-FE';  // Reemplázalo con tu clave
-const CHANNEL_ID = 'UCx-JNGoyRJrCjoeW3gESKcQ'; // Reemplázalo con el ID de tu canal
+const API_KEY = 'AIzaSyB3Lu22nUV_G9llHGkHN1e7Hm2Mocny-FE';
+const CHANNEL_USERNAME = '@tutorialescamacho8367';
+
+async function getChannelIdFromUsername(username) {
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&q=${username}&type=channel&part=snippet`);
+    const data = await response.json();
+    return data.items?.[0]?.snippet?.channelId || null;
+}
 
 async function fetchVideos() {
     try {
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=6`);
+        const channelId = await getChannelIdFromUsername(CHANNEL_USERNAME);
+        if (!channelId) throw new Error('No se pudo obtener el ID del canal.');
+
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${channelId}&part=snippet,id&order=date&maxResults=6`);
         const data = await response.json();
 
         if (!data.items) throw new Error('No se encontraron videos');
 
-        const videoContainer = document.querySelector('.video-container');
-        videoContainer.innerHTML = ''; // Limpiar contenedor
+        const grid = document.querySelector('.videos-grid');
+        grid.innerHTML = ''; // Limpiar tarjetas actuales
 
         data.items.forEach(video => {
+            if (!video.id.videoId) return;
+
             const videoId = video.id.videoId;
             const title = video.snippet.title;
             const thumbnail = video.snippet.thumbnails.medium.url;
+            const date = new Date(video.snippet.publishedAt).toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
 
             const videoCard = document.createElement('div');
             videoCard.classList.add('video-card');
-            videoCard.setAttribute('data-video', `https://www.youtube.com/watch?v=${videoId}`);
-
             videoCard.innerHTML = `
-                <img src="${thumbnail}" alt="${title}">
-                <h3>${title}</h3>
+                <div class="thumbnail-container">
+                    <img src="${thumbnail}" alt="Miniatura del video">
+                    <div class="play-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                </div>
+                <div class="video-info">
+                    <h3>${title}</h3>
+                    <p>${video.snippet.description.slice(0, 80)}...</p>
+                    <div class="video-stats">
+                        <span><i class="far fa-calendar-alt"></i> ${date}</span>
+                        <span><i class="far fa-eye"></i> + vistas</span>
+                    </div>
+                </div>
             `;
 
-            videoCard.addEventListener('click', function () {
-                window.open(this.getAttribute('data-video'), '_blank', 'noopener,noreferrer');
+            videoCard.addEventListener('click', () => {
+                window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank', 'noopener,noreferrer');
             });
 
-            videoContainer.appendChild(videoCard);
+            grid.appendChild(videoCard);
         });
     } catch (error) {
         console.error('Error al obtener los videos:', error);
     }
 }
 
-// Llamar a la función al cargar la página
+// Al cargar la página
 fetchVideos();
 
-// Enlaces de redes sociales - Reemplaza con tus propios enlaces
+// Enlaces de redes sociales
 document.querySelectorAll('.social-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
         const network = this.getAttribute('title');
         let url = '#';
-        
-        switch(network) {
+
+        switch (network) {
             case 'Facebook':
                 url = 'https://facebook.com/tucanal';
                 break;
@@ -59,21 +85,12 @@ document.querySelectorAll('.social-btn').forEach(btn => {
                 url = 'https://tiktok.com/@tucanal';
                 break;
         }
-        
+
         window.open(url, '_blank');
     });
 });
 
-// Botón para ir al canal de YouTube
-document.querySelector('.channel-btn').addEventListener('click', function() {
+// Botón para ir al canal
+document.querySelector('.channel-btn').addEventListener('click', function () {
     window.open('https://www.youtube.com/@tutorialescamacho8367');
-});
-
-// Hacer que los videos sean clickeables
-document.querySelectorAll('.video-card').forEach(card => {
-    card.addEventListener('click', function() {
-        // Aquí puedes agregar la lógica para abrir el video específico
-        // Por ejemplo: window.open('https://youtube.com/watch?v=ID_DEL_VIDEO', '_blank');
-        alert('Abriendo video...');
-    });
 });
